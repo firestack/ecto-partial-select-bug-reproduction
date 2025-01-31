@@ -10,16 +10,18 @@ alias ReproSelect.Schema.Parent
 	end
 
 	test "bug repro" do
-	  Repo.insert!(%Parent{
-		x: 1,
-		assoc: %Child{
-			x: 2
-		}
-	  })
+		Repo.insert!(%Parent{
+			x: 1,
+			assoc: %Child{
+				x: 2
+			}
+		})
 
-	  from(
-		Parent
-	)
-	  Repo.one!()
+		from(
+			Parent,
+
+			select: [:x]
+		)
+		|> Repo.one!()
 	end
 end
