@@ -6,8 +6,5 @@ config :repro_select,
 config :repro_select, ReproSelect.Repo,
 	database: "tmp/database.db"
 
-# config :repro_select, ReproSelect.Repo,
-# 	database: "repro_select_repo",
-# 	username: "user",
-# 	password: "pass",
-# 	hostname: "localhost"
+config :repro_select, ReproSelect.Repo,
+  pool: Ecto.Adapters.SQL.Sandbox
