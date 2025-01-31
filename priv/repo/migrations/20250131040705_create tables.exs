@@ -1,7 +1,7 @@
 defmodule :"Elixir.ReproSelect.Repo.Migrations.Create tables" do
-  use Ecto.Migration
+	use Ecto.Migration
 
-  def change do
+	def change do
 	create table :parent do
 add :x, :integer
 
@@ -11,5 +11,5 @@ add :x, :integer
 
 add :x, :integer
 	end
-  end
+	end
 end
