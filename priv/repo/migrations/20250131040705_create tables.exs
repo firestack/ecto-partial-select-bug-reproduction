@@ -3,13 +3,12 @@ defmodule :"Elixir.ReproSelect.Repo.Migrations.Create tables" do
 
 	def change do
 	create table :parent do
-add :x, :integer
-
+		add :x, :integer
 	end
 
 	create table :child do
-
-add :x, :integer
+		add :x, :integer
+		add :parent_id, references(:parent)
 	end
 	end
 end
