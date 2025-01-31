@@ -1,18 +1,18 @@
 defmodule ReproSelect do
-  @moduledoc """
-  Documentation for `ReproSelect`.
-  """
+	@moduledoc """
+	Documentation for `ReproSelect`.
+	"""
 
-  @doc """
-  Hello world.
+	@doc """
+	Hello world.
 
-  ## Examples
+	## Examples
 
-      iex> ReproSelect.hello()
-      :world
+			iex> ReproSelect.hello()
+			:world
 
-  """
-  def hello do
-    :world
-  end
+	"""
+	def hello do
+		:world
+	end
 end
