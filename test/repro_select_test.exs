@@ -1,8 +1,25 @@
 defmodule ReproSelectTest do
 	use ExUnit.Case
-	doctest ReproSelect
+alias ReproSelect.Schema.Child
+alias ReproSelect.Schema.Parent
+	use ReproSelect.RepoCase
 
-	test "greets the world" do
-		assert ReproSelect.hello() == :world
+	test "inserts and retreves" do
+		%Parent{id: id} = Repo.insert!(%Parent{})
+		%Parent{id: ^id} = Repo.get!(Parent, id)
+	end
+
+	test "bug repro" do
+	  Repo.insert!(%Parent{
+		x: 1,
+		assoc: %Child{
+			x: 2
+		}
+	  })
+
+	  from(
+		Parent
+	)
+	  Repo.one!()
 	end
 end
