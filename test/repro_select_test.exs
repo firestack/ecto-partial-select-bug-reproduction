@@ -18,8 +18,10 @@ alias ReproSelect.Schema.Parent
 		})
 
 		%Parent{x: 1, id: nil, assoc: %Child{id: nil, x: 2}} = from(
-			Parent,
-			preload: :assoc,
+			p in Parent,
+
+			join: c in assoc(p, :child),
+			preload: [assoc: c],
 
 			select: [:x, assoc: [:x]]
 		)
