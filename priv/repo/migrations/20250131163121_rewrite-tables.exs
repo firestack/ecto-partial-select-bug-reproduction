@@ -8,7 +8,7 @@ defmodule :"Elixir.ReproSelect.Repo.Migrations.Rewrite-tables" do
 
 		create table(:detours) do
 			add :y, :integer
-			add :user, references(:users)
+			add :user_id, references(:users)
 		end
 	end
 end

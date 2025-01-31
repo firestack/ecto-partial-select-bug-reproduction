@@ -12,36 +12,36 @@ defmodule ReproSelectTest do
 	test "bug: cannot partial select structs without id" do
 		Repo.insert!(%User{
 			x: 1,
-			assoc: %Detour{
-				x: 2
-			}
+			detours: [%Detour{
+				y: 2
+			}]
 		})
 
-		%Detour{x: 2, id: nil, parent: %User{id: nil, x: 1}} =
+		%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
 			from(
-				c in Child,
-				join: p in assoc(c, :parent),
-				preload: [parent: p],
-				select: [:x, parent: [:x]]
+				c in Detour,
+				join: p in assoc(c, :user),
+				preload: [user: p],
+				select: [:y, user: [:x]]
 			)
 			|> Repo.one!()
 	end
 
 	test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
-		%User{id: parent_id, assoc: %Detour{id: child_id}} =
+		%User{id: user_id, detours: [%Detour{id: detour_id}]} =
 			Repo.insert!(%User{
 				x: 1,
-				assoc: %Detour{
-					x: 2
-				}
+				detours: [%Detour{
+					y: 2
+				}]
 			})
 
-		%Detour{x: 2, id: ^child_id, parent: %User{id: ^parent_id, x: 1}} =
+		%Detour{y: 2, id: ^detour_id, user: %User{id: ^user_id, x: 1}} =
 			from(
-				c in Child,
-				join: p in assoc(c, :parent),
-				preload: [parent: p],
-				select: [:id, :x, parent: [:id, :x]]
+				d in Detour,
+				join: u in assoc(d, :user),
+				preload: [user: u],
+				select: [:id, :y, user: [:id, :x]]
 			)
 			|> Repo.one!()
 	end
