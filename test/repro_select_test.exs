@@ -17,14 +17,32 @@ alias ReproSelect.Schema.Parent
 			}
 		})
 
-		%Parent{x: 1, id: nil, assoc: %Child{id: nil, x: 2}} = from(
-			p in Parent,
+		%Child{x: 2, id: nil, parent: %Parent{id: nil, x: 1}} =
+			from(
+				c in Child,
+				join: p in assoc(c, :parent),
+				preload: [parent: p],
+				select: [:x, parent: [:x]]
+			)
+			|> Repo.one!()
+	end
 
-			join: c in assoc(p, :child),
-			preload: [assoc: c],
 
-			select: [:x, assoc: [:x]]
-		)
-		|> Repo.one!()
+	test "bug repro with id" do
+		Repo.insert!(%Parent{
+			x: 1,
+			assoc: %Child{
+				x: 2
+			}
+		})
+
+		%Child{x: 2, id: _, parent: %Parent{id: _, x: 1}} =
+			from(
+				c in Child,
+				join: p in assoc(c, :parent),
+				preload: [parent: p],
+				select: [:id, :x, parent: [:id, :x]]
+			)
+			|> Repo.one!()
 	end
 end
