@@ -1,7 +1,7 @@
-defmodule ReproSelect.Schema.Parent do
+defmodule ReproSelect.Schema.User do
 	use Ecto.Schema
 
-	schema "user" do
+	schema "users" do
 		field :x, :integer
 		has_many :detours, ReproSelect.Schema.Detour
 	end

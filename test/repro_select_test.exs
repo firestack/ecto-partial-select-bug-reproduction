@@ -1,23 +1,23 @@
 defmodule ReproSelectTest do
 	use ExUnit.Case
-	alias ReproSelect.Schema.Child
-	alias ReproSelect.Schema.Parent
+	alias ReproSelect.Schema.User
+	alias ReproSelect.Schema.Detour
 	use ReproSelect.RepoCase
 
 	test "baseline: can insert and retrieve from DB" do
-		%Parent{id: id} = Repo.insert!(%Parent{})
-		%Parent{id: ^id} = Repo.get!(Parent, id)
+		%User{id: id} = Repo.insert!(%User{})
+		%User{id: ^id} = Repo.get!(User, id)
 	end
 
 	test "bug: cannot partial select structs without id" do
-		Repo.insert!(%Parent{
+		Repo.insert!(%User{
 			x: 1,
-			assoc: %Child{
+			assoc: %Detour{
 				x: 2
 			}
 		})
 
-		%Child{x: 2, id: nil, parent: %Parent{id: nil, x: 1}} =
+		%Detour{x: 2, id: nil, parent: %User{id: nil, x: 1}} =
 			from(
 				c in Child,
 				join: p in assoc(c, :parent),
@@ -28,15 +28,15 @@ defmodule ReproSelectTest do
 	end
 
 	test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
-		%Parent{id: parent_id, assoc: %Child{id: child_id}} =
-			Repo.insert!(%Parent{
+		%User{id: parent_id, assoc: %Detour{id: child_id}} =
+			Repo.insert!(%User{
 				x: 1,
-				assoc: %Child{
+				assoc: %Detour{
 					x: 2
 				}
 			})
 
-		%Child{x: 2, id: ^child_id, parent: %Parent{id: ^parent_id, x: 1}} =
+		%Detour{x: 2, id: ^child_id, parent: %User{id: ^parent_id, x: 1}} =
 			from(
 				c in Child,
 				join: p in assoc(c, :parent),
