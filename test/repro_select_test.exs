@@ -19,9 +19,9 @@ defmodule ReproSelectTest do
 
 		%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
 			from(
-				c in Detour,
-				join: p in assoc(c, :user),
-				preload: [user: p],
+				d in Detour,
+				join: u in assoc(d, :user),
+				preload: [user: u],
 				select: [:y, user: [:x]]
 			)
 			|> Repo.one!()
