@@ -4,7 +4,7 @@ config :repro_select,
 	ecto_repos: [ReproSelect.Repo]
 
 config :repro_select, ReproSelect.Repo,
-	database: "tmp/database.db"
+	hostname: "localhost",
+	database: "repo_select"
 
-config :repro_select, ReproSelect.Repo,
-  pool: Ecto.Adapters.SQL.Sandbox
+import_config "#{config_env()}.exs"
