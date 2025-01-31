@@ -17,10 +17,11 @@ alias ReproSelect.Schema.Parent
 			}
 		})
 
-		from(
+		%Parent{x: 1, id: nil, assoc: %Child{id: nil, x: 2}} = from(
 			Parent,
+			preload: :assoc,
 
-			select: [:x]
+			select: [:x, assoc: [:x]]
 		)
 		|> Repo.one!()
 	end
