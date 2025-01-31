@@ -4,12 +4,12 @@ alias ReproSelect.Schema.Child
 alias ReproSelect.Schema.Parent
 	use ReproSelect.RepoCase
 
-	test "inserts and retreves" do
+	test "baseline: can insert and retrieve from DB" do
 		%Parent{id: id} = Repo.insert!(%Parent{})
 		%Parent{id: ^id} = Repo.get!(Parent, id)
 	end
 
-	test "bug repro" do
+	test "bug: cannot partial select structs without id" do
 		Repo.insert!(%Parent{
 			x: 1,
 			assoc: %Child{
@@ -28,7 +28,7 @@ alias ReproSelect.Schema.Parent
 	end
 
 
-	test "bug repro with id" do
+	test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
 		%Parent{id: parent_id, assoc: %Child{id: child_id}} = Repo.insert!(%Parent{
 			x: 1,
 			assoc: %Child{
