@@ -34,8 +34,8 @@ defmodule ReproSelect.MixProject do
 	defp elixirc_paths(_), do: ["lib"]
 
 	defp aliases do
-	[
-		test: ["ecto.drop", "ecto.create --quiet", "ecto.migrate", "test"]
-	]
+		[
+			test: ["ecto.drop", "ecto.create --quiet", "ecto.migrate", "test"]
+		]
 	end
 end

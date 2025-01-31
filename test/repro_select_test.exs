@@ -1,7 +1,7 @@
 defmodule ReproSelectTest do
 	use ExUnit.Case
-alias ReproSelect.Schema.Child
-alias ReproSelect.Schema.Parent
+	alias ReproSelect.Schema.Child
+	alias ReproSelect.Schema.Parent
 	use ReproSelect.RepoCase
 
 	test "baseline: can insert and retrieve from DB" do
@@ -27,14 +27,14 @@ alias ReproSelect.Schema.Parent
 			|> Repo.one!()
 	end
 
-
 	test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
-		%Parent{id: parent_id, assoc: %Child{id: child_id}} = Repo.insert!(%Parent{
-			x: 1,
-			assoc: %Child{
-				x: 2
-			}
-		})
+		%Parent{id: parent_id, assoc: %Child{id: child_id}} =
+			Repo.insert!(%Parent{
+				x: 1,
+				assoc: %Child{
+					x: 2
+				}
+			})
 
 		%Child{x: 2, id: ^child_id, parent: %Parent{id: ^parent_id, x: 1}} =
 			from(
