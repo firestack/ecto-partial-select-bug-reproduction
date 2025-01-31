@@ -23,7 +23,25 @@ defmodule ReproSelectTest do
 				join: u in assoc(d, :user),
 				preload: [user: u],
 				select: [:y, user: [:x]]
+				# select: %Detour{y: d.y, user: u}
 			)
+			|> Repo.one!()
+	end
+
+	test "bug: cannot partial select structs without id: 2" do
+		Repo.insert!(%User{
+			x: 1,
+			detours: [%Detour{
+				y: 2
+			}]
+		})
+
+		%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
+			from(Detour, as: :detour)
+			|> join(:left, [detour: d], assoc(d, :user), as: :user)
+			|> preload([user: u], user: u)
+			|> select([detour: d, user: u], %Detour{y: d.y, user: u})
+			# |> select([detour: d, user: u], %Detour{y: d.y, user: %User{x: u.x}})
 			|> Repo.one!()
 	end
 
