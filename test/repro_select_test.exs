@@ -29,14 +29,14 @@ alias ReproSelect.Schema.Parent
 
 
 	test "bug repro with id" do
-		Repo.insert!(%Parent{
+		%Parent{id: parent_id, assoc: %Child{id: child_id}} = Repo.insert!(%Parent{
 			x: 1,
 			assoc: %Child{
 				x: 2
 			}
 		})
 
-		%Child{x: 2, id: _, parent: %Parent{id: _, x: 1}} =
+		%Child{x: 2, id: ^child_id, parent: %Parent{id: ^parent_id, x: 1}} =
 			from(
 				c in Child,
 				join: p in assoc(c, :parent),
