@@ -1,17 +1,17 @@
 Mix.install(
-  [
-    {:ecto_sql, "~> 3.0"},
-    {:postgrex, ">= 0.0.0"}
-  ],
-  config: [
-    test: [
-      {Test.Repo,
-       [
-         database: "repo_select_test",
-         pool: Ecto.Adapters.SQL.Sandbox
-       ]}
-    ]
-  ]
+	[
+		{:ecto_sql, "~> 3.0"},
+		{:postgrex, ">= 0.0.0"}
+	],
+	config: [
+		test: [
+			{Test.Repo,
+			 [
+				 database: "repo_select_test",
+				 pool: Ecto.Adapters.SQL.Sandbox
+			 ]}
+		]
+	]
 )
 
 defmodule Test.Repo do
@@ -27,12 +27,12 @@ defmodule Test.Migrations.CreateTables do
 
 	def change do
 		create table(:users) do
-			add :x, :integer
+			add(:x, :integer)
 		end
 
 		create table(:detours) do
-			add :y, :integer
-			add :user_id, references(:users)
+			add(:y, :integer)
+			add(:user_id, references(:users))
 		end
 	end
 end
@@ -41,8 +41,8 @@ defmodule Test.User do
 	use Ecto.Schema
 
 	schema "users" do
-		field :x, :integer
-		has_many :detours, Test.Detour
+		field(:x, :integer)
+		has_many(:detours, Test.Detour)
 	end
 end
 
@@ -50,15 +50,13 @@ defmodule Test.Detour do
 	use Ecto.Schema
 
 	schema "detours" do
-		field :y, :integer
-		belongs_to :user, Test.User
+		field(:y, :integer)
+		belongs_to(:user, Test.User)
 	end
 end
 
-
-ExUnit.start()
-
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
+ExUnit.start()
 
 # 2) Create a new test module (test case) and use "ExUnit.Case".
 defmodule Tests do
@@ -85,9 +83,11 @@ defmodule Tests do
 	test "bug: cannot partial select structs without id" do
 		Repo.insert!(%User{
 			x: 1,
-			detours: [%Detour{
-				y: 2
-			}]
+			detours: [
+				%Detour{
+					y: 2
+				}
+			]
 		})
 
 		%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
@@ -104,9 +104,11 @@ defmodule Tests do
 	test "bug: cannot partial select structs without id: 2" do
 		Repo.insert!(%User{
 			x: 1,
-			detours: [%Detour{
-				y: 2
-			}]
+			detours: [
+				%Detour{
+					y: 2
+				}
+			]
 		})
 
 		%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
@@ -122,9 +124,11 @@ defmodule Tests do
 		%User{id: user_id, detours: [%Detour{id: detour_id}]} =
 			Repo.insert!(%User{
 				x: 1,
-				detours: [%Detour{
-					y: 2
-				}]
+				detours: [
+					%Detour{
+						y: 2
+					}
+				]
 			})
 
 		%Detour{y: 2, id: ^detour_id, user: %User{id: ^user_id, x: 1}} =
