@@ -152,25 +152,73 @@ defmodule Tests do
 		%MySchema{id: ^id} = Repo.get!(MySchema, id)
 	end
 
-	# test "bug: cannot partial select structs without id" do
-	# 	Repo.insert!(%User{
-	# 		x: 1,
-	# 		detours: [
-	# 			%Detour{
-	# 				y: 2
-	# 			}
-	# 		]
-	# 	})
+	test "bug: cannot partial select structs without id: single element" do
+		%MySchema{
+			id: my_schema_id,
+			property: generated_property,
+			one_assoc: %{id: single_association_id, x: generated_x}
+		} = test_fixture()
 
-	# 	%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
-	# 		from(
-	# 			d in Detour,
-	# 			join: u in assoc(d, :user),
-	# 			preload: [user: u],
-	# 			select: [:y, user: [:x]]
-	# 		)
-	# 		|> Repo.one!()
-	# end
+		%SingleAssociation{
+			id: nil,
+			x: ^generated_x,
+
+			my_schema: %MySchema{
+				id: nil,
+				property: ^generated_property
+			}
+		} =
+			from(
+				sa in SingleAssociation,
+				join: ms in assoc(sa, :my_schema),
+				preload: [my_schema: ms],
+				select: [:x, my_schema: [:property]]
+			)
+			|> Repo.one!()
+	end
+
+
+	test "bug: cannot partial select structs without id: list" do
+		%MySchema{
+			id: my_schema_id_1,
+			property: generated_property_1,
+			one_assoc: %{id: single_association_id_1, x: generated_x_1}
+		} = test_fixture()
+
+		%MySchema{
+			id: my_schema_id_2,
+			property: generated_property_2,
+			one_assoc: %{id: single_association_id_2, x: generated_x_2}
+		} = test_fixture()
+
+		assert [
+			%SingleAssociation{
+				id: nil,
+				x: ^generated_x_1,
+
+				my_schema: %MySchema{
+					id: nil,
+					property: ^generated_property_1
+				}
+			},
+			%SingleAssociation{
+				id: nil,
+				x: ^generated_x_2,
+
+				my_schema: %MySchema{
+					id: nil,
+					property: ^generated_property_2
+				}
+			}
+		] =
+			from(
+				sa in SingleAssociation,
+				join: ms in assoc(sa, :my_schema),
+				preload: [my_schema: ms],
+				select: [:x, my_schema: [:property]]
+			)
+			|> Repo.all()
+	end
 
 	# test "bug: cannot partial select structs without id: 2" do
 	# 	Repo.insert!(%User{
@@ -191,23 +239,73 @@ defmodule Tests do
 	# 		|> Repo.one!()
 	# end
 
-	# test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
-	# 	%MySchema{
-	# 		id: id,
-	# 		property: generated_property,
-	# 		one_assoc: %{x: generated_x}
-	# 	} = test_fixture()
+	test "bug counterexample: can partial select, if id's are included for all structs and preloads: single element" do
+		%MySchema{
+			id: my_schema_id,
+			property: generated_property,
+			one_assoc: %{id: single_association_id, x: generated_x}
+		} = test_fixture()
 
 
-	# 	%Detour{y: 2, id: ^detour_id, user: %MySchema{id: ^user_id, x: 1}} =
-	# 		from(
-	# 			d in Detour,
-	# 			join: u in assoc(d, :user),
-	# 			preload: [user: u],
-	# 			select: [:id, :y, user: [:id, :x]]
-	# 		)
-	# 		|> Repo.one!()
-	# end
+		%SingleAssociation{
+			id: ^single_association_id,
+			x: ^generated_x,
+
+			my_schema: %MySchema{
+				id: ^my_schema_id,
+				property: ^generated_property
+			}
+		} =
+			from(
+				sa in SingleAssociation,
+				join: ms in assoc(sa, :my_schema),
+				preload: [my_schema: ms],
+				select: [:id, :x, my_schema: [:id, :property]]
+			)
+			|> Repo.one!()
+	end
+
+	test "bug counterexample: can partial select, if id's are included for all structs and preloads: list" do
+		%MySchema{
+			id: my_schema_id_1,
+			property: generated_property_1,
+			one_assoc: %{id: single_association_id_1, x: generated_x_1}
+		} = test_fixture()
+
+		%MySchema{
+			id: my_schema_id_2,
+			property: generated_property_2,
+			one_assoc: %{id: single_association_id_2, x: generated_x_2}
+		} = test_fixture()
+
+		assert [
+			%SingleAssociation{
+				id: ^single_association_id_1,
+				x: ^generated_x_1,
+
+				my_schema: %MySchema{
+					id: ^my_schema_id_1,
+					property: ^generated_property_1
+				}
+			},
+			%SingleAssociation{
+				id: ^single_association_id_2,
+				x: ^generated_x_2,
+
+				my_schema: %MySchema{
+					id: ^my_schema_id_2,
+					property: ^generated_property_2
+				}
+			}
+		] =
+			from(
+				sa in SingleAssociation,
+				join: ms in assoc(sa, :my_schema),
+				preload: [my_schema: ms],
+				select: [:id, :x, my_schema: [:id, :property]]
+			)
+			|> Repo.all()
+	end
 end
 
 # Run Tests
