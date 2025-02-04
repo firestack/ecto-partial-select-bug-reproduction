@@ -1,14 +1,18 @@
-Mix.install([
-	{:ecto_sql, "~> 3.0"},
-	{:postgrex, ">= 0.0.0"}
-])
-
-Mix.Task.run("ecto.drop")
-
-Application.put_env(:test, Test.Repo, [
-	database: "repo_select_test",
-	pool: Ecto.Adapters.SQL.Sandbox
-])
+Mix.install(
+  [
+    {:ecto_sql, "~> 3.0"},
+    {:postgrex, ">= 0.0.0"}
+  ],
+  config: [
+    test: [
+      {Test.Repo,
+       [
+         database: "repo_select_test",
+         pool: Ecto.Adapters.SQL.Sandbox
+       ]}
+    ]
+  ]
+)
 
 defmodule Test.Repo do
 	use Ecto.Repo,
