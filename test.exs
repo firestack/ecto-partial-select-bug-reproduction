@@ -72,12 +72,19 @@ end
 
 #region ExUnit
 
-# Configure ExUnit and Ecto
+# Configure and Start ExUnit application but don't run tests yet
 ExUnit.start(
+	# Print tests as they run
 	trace: true,
-	auto_run: false,
-	seed: 0
+
+	# Run Tests in order of definition
+	seed: 0,
+
+	# Don't run tests yet
+	autorun: false
 )
+
+# Configure Ecto
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 
 # Define Tests
