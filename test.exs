@@ -35,6 +35,8 @@ Test.Repo.config()
 |> Test.Repo.__adapter__().storage_up()
 |> dbg()
 
+IO.puts("\n#{String.duplicate("=", 80)}\n")
+
 # Start Repo
 {:ok, _pid} = Test.Repo.start_link()
 
@@ -135,8 +137,18 @@ defmodule Tests do
 		:ok
 	end
 
+	defp test_fixture() do
+		%MySchema{
+			property: Enum.random(0..100),
+			one_assoc: %SingleAssociation{
+				x: Enum.random(0..100)
+			}
+		}
+		|> Repo.insert!()
+	end
+
 	test "baseline: can insert and retrieve from DB" do
-		%MySchema{id: id} = Repo.insert!(%MySchema{})
+		%MySchema{id: id} = test_fixture()
 		%MySchema{id: ^id} = Repo.get!(MySchema, id)
 	end
 
@@ -179,28 +191,23 @@ defmodule Tests do
 	# 		|> Repo.one!()
 	# end
 
-	test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
-		%MySchema{
-			id: id,
-			property: generated_property,
-			one_assoc: %{x: generated_x}
-		} =
-			Repo.insert!(%MySchema{
-				property: Enum.random(0..100),
-				one_assoc: %SingleAssociation{
-					x: Enum.random(0..100)
-				}
-			})
+	# test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
+	# 	%MySchema{
+	# 		id: id,
+	# 		property: generated_property,
+	# 		one_assoc: %{x: generated_x}
+	# 	} = test_fixture()
 
-		%Detour{y: 2, id: ^detour_id, user: %MySchema{id: ^user_id, x: 1}} =
-			from(
-				d in Detour,
-				join: u in assoc(d, :user),
-				preload: [user: u],
-				select: [:id, :y, user: [:id, :x]]
-			)
-			|> Repo.one!()
-	end
+
+	# 	%Detour{y: 2, id: ^detour_id, user: %MySchema{id: ^user_id, x: 1}} =
+	# 		from(
+	# 			d in Detour,
+	# 			join: u in assoc(d, :user),
+	# 			preload: [user: u],
+	# 			select: [:id, :y, user: [:id, :x]]
+	# 		)
+	# 		|> Repo.one!()
+	# end
 end
 
 # Run Tests
