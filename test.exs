@@ -73,7 +73,11 @@ end
 #region ExUnit
 
 # Configure ExUnit and Ecto
-ExUnit.start(auto_run: false, seed: 0)
+ExUnit.start(
+	trace: true,
+	auto_run: false,
+	seed: 0
+)
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 
 # Define Tests
@@ -113,7 +117,6 @@ defmodule Tests do
 				join: u in assoc(d, :user),
 				preload: [user: u],
 				select: [:y, user: [:x]]
-				# select: %Detour{y: d.y, user: u}
 			)
 			|> Repo.one!()
 	end
