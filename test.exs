@@ -6,22 +6,32 @@ Mix.install(
 	config: [
 		test: [
 			{Test.Repo,
-			 [
-				 database: "repo_select_test",
-				 pool: Ecto.Adapters.SQL.Sandbox
-			 ]}
+			[
+				database: "repo_select_test",
+				pool: Ecto.Adapters.SQL.Sandbox
+			]}
 		]
 	]
 )
 
+#region Ecto
+
+# Define Repo
 defmodule Test.Repo do
 	use Ecto.Repo,
 		otp_app: :test,
 		adapter: Ecto.Adapters.Postgres
 end
 
+# Create Database
+# https://github.com/elixir-ecto/ecto/blob/v3.12.5/lib/mix/tasks/ecto.create.ex#L58
+Test.Repo.__adapter__().storage_up(Test.Repo.config()) |> dbg()
+
+# Start Repo
 {:ok, _pid} = Test.Repo.start_link()
 
+
+# Define and run migrations
 defmodule Test.Migrations.CreateTables do
 	use Ecto.Migration
 
@@ -37,6 +47,9 @@ defmodule Test.Migrations.CreateTables do
 	end
 end
 
+Ecto.Migrator.up(Test.Repo, 20250204000000, Test.Migrations.CreateTables)
+
+# Define Schemas
 defmodule Test.User do
 	use Ecto.Schema
 
@@ -55,14 +68,18 @@ defmodule Test.Detour do
 	end
 end
 
-Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
-ExUnit.start()
+#endregion Ecto
 
-# 2) Create a new test module (test case) and use "ExUnit.Case".
+#region ExUnit
+
+# Configure ExUnit and Ecto
+ExUnit.start(auto_run: false, seed: 0)
+Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
+
+# Define Tests
 defmodule Tests do
 	use ExUnit.Case
 
-	# import Ecto
 	import Ecto.Query
 
 	alias Test.Repo
@@ -141,3 +158,6 @@ defmodule Tests do
 			|> Repo.one!()
 	end
 end
+
+# Run Tests
+ExUnit.run()
