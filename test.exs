@@ -25,7 +25,9 @@ end
 
 # Create Database
 # https://github.com/elixir-ecto/ecto/blob/v3.12.5/lib/mix/tasks/ecto.create.ex#L58
-Test.Repo.__adapter__().storage_up(Test.Repo.config()) |> dbg()
+Test.Repo.config()
+|> Test.Repo.__adapter__().storage_up()
+|> dbg()
 
 # Start Repo
 {:ok, _pid} = Test.Repo.start_link()
