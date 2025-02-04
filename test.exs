@@ -25,6 +25,12 @@ end
 
 # Create Database
 # https://github.com/elixir-ecto/ecto/blob/v3.12.5/lib/mix/tasks/ecto.create.ex#L58
+if System.get_env("DROP_DB") do
+	Test.Repo.config()
+	|> Test.Repo.__adapter__().storage_down()
+	|> dbg()
+end
+
 Test.Repo.config()
 |> Test.Repo.__adapter__().storage_up()
 |> dbg()
@@ -38,37 +44,59 @@ defmodule Test.Migrations.CreateTables do
 	use Ecto.Migration
 
 	def change do
-		create table(:users) do
-			add(:x, :integer)
+		create table("my_schema") do
+			add(:property, :integer)
 		end
 
-		create table(:detours) do
+		create table("single_association") do
+			add(:x, :integer)
+
+			add(:my_schema_id, references("my_schema"))
+		end
+
+		create table("many_association") do
 			add(:y, :integer)
-			add(:user_id, references(:users))
+
+			add(:my_schema_id, references("my_schema"))
 		end
 	end
 end
 
-Ecto.Migrator.up(Test.Repo, 20250204000000, Test.Migrations.CreateTables)
+
+Ecto.Migrator.up(Test.Repo, 20250204000002, Test.Migrations.CreateTables)
 
 # Define Schemas
-defmodule Test.User do
+defmodule Test.Schemas.MySchema do
 	use Ecto.Schema
 
-	schema "users" do
+	schema "my_schema" do
+		field(:property, :integer)
+
+		has_one(:one_assoc, Test.Schemas.SingleAssociation)
+		# has_many(:many_assoc, Test.Schemas.ManyAssociation)
+	end
+end
+
+defmodule Test.Schemas.SingleAssociation do
+	use Ecto.Schema
+
+	schema "single_association" do
 		field(:x, :integer)
-		has_many(:detours, Test.Detour)
+
+		belongs_to(:my_schema, Test.Schemas.MySchema)
 	end
 end
 
-defmodule Test.Detour do
-	use Ecto.Schema
 
-	schema "detours" do
-		field(:y, :integer)
-		belongs_to(:user, Test.User)
-	end
-end
+# defmodule Test.Schemas.ManyAssociation do
+# 	use Ecto.Schema
+
+# 	schema "many_association" do
+# 		field(:y, :integer)
+
+# 		belongs_to(:user, Test.User)
+# 	end
+# end
 
 #endregion Ecto
 
@@ -96,8 +124,10 @@ defmodule Tests do
 	import Ecto.Query
 
 	alias Test.Repo
-	alias Test.User
-	alias Test.Detour
+	alias Test.Schemas.{
+		MySchema,
+		SingleAssociation
+	}
 
 	setup tags do
 		pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Test.Repo, shared: not tags[:async])
@@ -106,61 +136,63 @@ defmodule Tests do
 	end
 
 	test "baseline: can insert and retrieve from DB" do
-		%User{id: id} = Repo.insert!(%User{})
-		%User{id: ^id} = Repo.get!(User, id)
+		%MySchema{id: id} = Repo.insert!(%MySchema{})
+		%MySchema{id: ^id} = Repo.get!(MySchema, id)
 	end
 
-	test "bug: cannot partial select structs without id" do
-		Repo.insert!(%User{
-			x: 1,
-			detours: [
-				%Detour{
-					y: 2
-				}
-			]
-		})
+	# test "bug: cannot partial select structs without id" do
+	# 	Repo.insert!(%User{
+	# 		x: 1,
+	# 		detours: [
+	# 			%Detour{
+	# 				y: 2
+	# 			}
+	# 		]
+	# 	})
 
-		%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
-			from(
-				d in Detour,
-				join: u in assoc(d, :user),
-				preload: [user: u],
-				select: [:y, user: [:x]]
-			)
-			|> Repo.one!()
-	end
+	# 	%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
+	# 		from(
+	# 			d in Detour,
+	# 			join: u in assoc(d, :user),
+	# 			preload: [user: u],
+	# 			select: [:y, user: [:x]]
+	# 		)
+	# 		|> Repo.one!()
+	# end
 
-	test "bug: cannot partial select structs without id: 2" do
-		Repo.insert!(%User{
-			x: 1,
-			detours: [
-				%Detour{
-					y: 2
-				}
-			]
-		})
+	# test "bug: cannot partial select structs without id: 2" do
+	# 	Repo.insert!(%User{
+	# 		x: 1,
+	# 		detours: [
+	# 			%Detour{
+	# 				y: 2
+	# 			}
+	# 		]
+	# 	})
 
-		%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
-			from(Detour, as: :detour)
-			|> join(:left, [detour: d], assoc(d, :user), as: :user)
-			|> preload([user: u], user: u)
-			|> select([detour: d, user: u], %Detour{y: d.y, user: u})
-			# |> select([detour: d, user: u], %Detour{y: d.y, user: %User{x: u.x}})
-			|> Repo.one!()
-	end
+	# 	%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
+	# 		from(Detour, as: :detour)
+	# 		|> join(:left, [detour: d], assoc(d, :user), as: :user)
+	# 		|> preload([user: u], user: u)
+	# 		|> select([detour: d, user: u], %Detour{y: d.y, user: u})
+	# 		# |> select([detour: d, user: u], %Detour{y: d.y, user: %User{x: u.x}})
+	# 		|> Repo.one!()
+	# end
 
 	test "bug counterexample: can partial select, if id's are included for all structs and preloads" do
-		%User{id: user_id, detours: [%Detour{id: detour_id}]} =
-			Repo.insert!(%User{
-				x: 1,
-				detours: [
-					%Detour{
-						y: 2
-					}
-				]
+		%MySchema{
+			id: id,
+			property: generated_property,
+			one_assoc: %{x: generated_x}
+		} =
+			Repo.insert!(%MySchema{
+				property: Enum.random(0..100),
+				one_assoc: %SingleAssociation{
+					x: Enum.random(0..100)
+				}
 			})
 
-		%Detour{y: 2, id: ^detour_id, user: %User{id: ^user_id, x: 1}} =
+		%Detour{y: 2, id: ^detour_id, user: %MySchema{id: ^user_id, x: 1}} =
 			from(
 				d in Detour,
 				join: u in assoc(d, :user),
