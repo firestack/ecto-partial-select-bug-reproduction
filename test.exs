@@ -177,18 +177,15 @@ defmodule Tests do
 			|> Repo.one!()
 	end
 
-
 	test "bug: cannot partial select structs without id: list" do
 		%MySchema{
-			id: my_schema_id_1,
 			property: generated_property_1,
-			one_assoc: %{id: single_association_id_1, x: generated_x_1}
+			one_assoc: %{x: generated_x_1}
 		} = test_fixture()
 
 		%MySchema{
-			id: my_schema_id_2,
 			property: generated_property_2,
-			one_assoc: %{id: single_association_id_2, x: generated_x_2}
+			one_assoc: %{x: generated_x_2}
 		} = test_fixture()
 
 		assert [
@@ -219,25 +216,6 @@ defmodule Tests do
 			)
 			|> Repo.all()
 	end
-
-	# test "bug: cannot partial select structs without id: 2" do
-	# 	Repo.insert!(%User{
-	# 		x: 1,
-	# 		detours: [
-	# 			%Detour{
-	# 				y: 2
-	# 			}
-	# 		]
-	# 	})
-
-	# 	%Detour{y: 2, id: nil, user: %User{id: nil, x: 1}} =
-	# 		from(Detour, as: :detour)
-	# 		|> join(:left, [detour: d], assoc(d, :user), as: :user)
-	# 		|> preload([user: u], user: u)
-	# 		|> select([detour: d, user: u], %Detour{y: d.y, user: u})
-	# 		# |> select([detour: d, user: u], %Detour{y: d.y, user: %User{x: u.x}})
-	# 		|> Repo.one!()
-	# end
 
 	test "bug counterexample: can partial select, if id's are included for all structs and preloads: single element" do
 		%MySchema{
