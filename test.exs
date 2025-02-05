@@ -114,12 +114,35 @@ ExUnit.start(
 	# Run Tests in order of definition
 	seed: 0,
 
+	exclude: :test,
+	include: :only,
+
 	# Don't run tests yet
 	autorun: false
 )
 
 # Configure Ecto
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
+
+{:ok, _} = :dbg.tracer(
+	:process,
+	{
+		fn
+			{:trace, _pid, :call, {module, function, args}}, _data ->
+				function = Function.capture(module, function, length(args))
+				dbg({:call, function, args})
+				nil
+
+			{:trace, _pid, :return_from, {module, function, arity}, ret_val}, _data ->
+				function = Function.capture(module, function, arity)
+
+				dbg({:returned, function, ret_val})
+				nil
+			event, data -> dbg({event, data})
+		end,
+		nil
+	}
+)
 
 # Define Tests
 defmodule Tests do
@@ -136,6 +159,8 @@ defmodule Tests do
 	setup tags do
 		pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Test.Repo, shared: not tags[:async])
 		on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+		on_exit(fn ->
+		end)
 		:ok
 	end
 
@@ -154,12 +179,22 @@ defmodule Tests do
 		%MySchema{id: ^id} = Repo.get!(MySchema, id)
 	end
 
+	@tag :only
 	test "bug: cannot partial select structs without id: single element" do
 		%MySchema{
 			id: my_schema_id,
 			property: generated_property,
 			one_assoc: %{id: single_association_id, x: generated_x}
 		} = test_fixture()
+
+		:dbg.p(:all, [:c])
+		# :dbg.tpl(Ecto, []) |> dbg()
+		:dbg.tpl(Ecto.Repo.Assoc, [{:_, [], [{:return_trace}]}]) |> dbg()
+		:dbg.tpl(Ecto.Repo.Queryable, [{:_, [], [{:return_trace}]}]) |> dbg()
+		# :dbg.tpl(Kernel, []) |> dbg()
+		# :dbg.tpl(Test.Repo, []) |> dbg()
+		# :dbg.tpl(:_, []) |> dbg()
+
 
 		%SingleAssociation{
 			id: nil,
@@ -176,8 +211,11 @@ defmodule Tests do
 				preload: [my_schema: ms],
 				select: [:x, my_schema: [:property]]
 			)
+			|> dbg()
 			|> Repo.one!()
-	end
+
+			:dbg.stop_clear() |> dbg()
+		end
 
 	test "bug: cannot partial select structs without id: list" do
 		%MySchema{
