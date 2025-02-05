@@ -130,7 +130,7 @@ Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 		fn
 			{:trace, _pid, :call, {module, function, args}}, _data ->
 				function = Function.capture(module, function, length(args))
-				dbg({:call, function, args})
+				dbg(%{thing: :call, function: function, args: args})
 				nil
 
 			{:trace, _pid, :return_from, {module, function, arity}, ret_val}, _data ->
@@ -143,6 +143,18 @@ Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 		nil
 	}
 )
+
+defmodule TraceHelpers do
+	def trace_ecto do
+		:dbg.p(:all, [:c])
+		# :dbg.tpl(Ecto, []) |> dbg()
+		:dbg.tpl(Ecto.Repo.Assoc, [{:_, [], [{:return_trace}]}]) |> dbg()
+		:dbg.tpl(Ecto.Repo.Queryable, [{:_, [], [{:return_trace}]}]) |> dbg()
+		# :dbg.tpl(Kernel, []) |> dbg()
+		# :dbg.tpl(Test.Repo, []) |> dbg()
+		# :dbg.tpl(:_, []) |> dbg()
+	end
+end
 
 # Define Tests
 defmodule Tests do
@@ -179,7 +191,6 @@ defmodule Tests do
 		%MySchema{id: ^id} = Repo.get!(MySchema, id)
 	end
 
-	@tag :only
 	test "bug: cannot partial select structs without id: single element" do
 		%MySchema{
 			id: my_schema_id,
@@ -187,14 +198,7 @@ defmodule Tests do
 			one_assoc: %{id: single_association_id, x: generated_x}
 		} = test_fixture()
 
-		:dbg.p(:all, [:c])
-		# :dbg.tpl(Ecto, []) |> dbg()
-		:dbg.tpl(Ecto.Repo.Assoc, [{:_, [], [{:return_trace}]}]) |> dbg()
-		:dbg.tpl(Ecto.Repo.Queryable, [{:_, [], [{:return_trace}]}]) |> dbg()
-		# :dbg.tpl(Kernel, []) |> dbg()
-		# :dbg.tpl(Test.Repo, []) |> dbg()
-		# :dbg.tpl(:_, []) |> dbg()
-
+		TraceHelpers.trace_ecto()
 
 		%SingleAssociation{
 			id: nil,
@@ -217,6 +221,7 @@ defmodule Tests do
 			:dbg.stop_clear() |> dbg()
 		end
 
+	@tag :only
 	test "bug: cannot partial select structs without id: list" do
 		%MySchema{
 			property: generated_property_1,
@@ -227,6 +232,8 @@ defmodule Tests do
 			property: generated_property_2,
 			one_assoc: %{x: generated_x_2}
 		} = test_fixture()
+
+		TraceHelpers.trace_ecto()
 
 		assert [
 			%SingleAssociation{
@@ -255,6 +262,8 @@ defmodule Tests do
 				select: [:x, my_schema: [:property]]
 			)
 			|> Repo.all()
+
+		:dbg.stop_clear() |> dbg()
 	end
 
 	test "bug counterexample: can partial select, if id's are included for all structs and preloads: single element" do
