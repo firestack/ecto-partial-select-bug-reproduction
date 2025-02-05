@@ -1,6 +1,8 @@
 Mix.install(
 	[
-		{:ecto_sql, "~> 3.0"},
+		# {:ecto, path: "../ecto"},
+		# {:ecto_sql, "~> 3.0"},
+		{:ecto_sql, path: "../ecto_sql"},
 		{:postgrex, ">= 0.0.0"}
 	],
 	config: [
