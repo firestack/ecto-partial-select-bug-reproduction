@@ -5,7 +5,7 @@
 elixir test.exs
 ```
 
-### Bug: Partial Select with Limit 1
+### Bug: Partial Select with single element (Repo.one!)
 ```elixir
   * test bug: cannot partial select structs without id: single element [L#137]
 16:34:44.895 [debug] QUERY OK db=0.7ms
@@ -50,7 +50,7 @@ SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_sche
        test.exs:159: (test)
 ```
 
-### Bug: Bug Partial Select with no Limit
+### Bug: Bug Partial Select with multiple elements (Repo.all)
 ```elixir
   * test bug: cannot partial select structs without id: list [L#162]
 16:33:54.902 [debug] QUERY OK db=0.7ms
