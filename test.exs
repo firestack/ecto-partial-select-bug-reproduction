@@ -1,8 +1,6 @@
 Mix.install(
 	[
-		# {:ecto, path: "../ecto"},
-		# {:ecto_sql, "~> 3.0"},
-		{:ecto_sql, path: "../ecto_sql"},
+		{:ecto_sql, "~> 3.0"},
 		{:postgrex, ">= 0.0.0"}
 	],
 	config: [
@@ -30,14 +28,10 @@ end
 if System.get_env("DROP_DB") do
 	Test.Repo.config()
 	|> Test.Repo.__adapter__().storage_down()
-	|> dbg()
 end
 
 Test.Repo.config()
 |> Test.Repo.__adapter__().storage_up()
-|> dbg()
-
-IO.puts("\n#{String.duplicate("=", 80)}\n")
 
 # Start Repo
 {:ok, _pid} = Test.Repo.start_link()
@@ -57,15 +51,8 @@ defmodule Test.Migrations.CreateTables do
 
 			add(:my_schema_id, references("my_schema"))
 		end
-
-		create table("many_association") do
-			add(:y, :integer)
-
-			add(:my_schema_id, references("my_schema"))
-		end
 	end
 end
-
 
 Ecto.Migrator.up(Test.Repo, 20250204000002, Test.Migrations.CreateTables)
 
@@ -91,17 +78,6 @@ defmodule Test.Schemas.SingleAssociation do
 	end
 end
 
-
-# defmodule Test.Schemas.ManyAssociation do
-# 	use Ecto.Schema
-
-# 	schema "many_association" do
-# 		field(:y, :integer)
-
-# 		belongs_to(:user, Test.User)
-# 	end
-# end
-
 #endregion Ecto
 
 #region ExUnit
@@ -114,97 +90,12 @@ ExUnit.start(
 	# Run Tests in order of definition
 	seed: 0,
 
-	exclude: :test,
-	include: :only,
-
 	# Don't run tests yet
 	autorun: false
 )
 
 # Configure Ecto
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
-
-defmodule TraceHelpers do
-	defmodule TraceData do
-		defstruct [
-			stacks: %{}
-		]
-	end
-	def configure_tracer do
-
-		{:ok, _} = :dbg.tracer(
-			:process,
-			{
-				&process_trace/2,
-				%TraceData{}
-			}
-		)
-	end
-
-	defp process_trace({:trace, pid, :call, {module, function, args}}, data) do
-		function = Function.capture(module, function, length(args))
-
-		IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
-		for {arg, index} <- Enum.with_index(args) do
-			IO.puts("arg[#{index+1}]: #{inspect(arg, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
-		end
-
-		IO.puts("=======================================")
-		# dbg(%{thing: :call, function: function, args: args})
-
-		data =
-			%{data
-				| stacks: %{
-					pid => [function] ++ (data.stacks[pid] || [])
-				}
-			}
-			|> dbg()
-
-		IO.puts("---------------------------------------")
-
-		data
-	end
-
-	defp process_trace({:trace, pid, :return_from, {module, function, arity}, ret_val}, data) do
-		function = Function.capture(module, function, arity)
-
-		IO.puts("ret_: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
-		IO.puts("#{inspect(ret_val, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
-		IO.puts("=======================================")
-
-		%TraceData{stacks: %{^pid => stack}} = data
-		stack = if function == (hd(stack)) do
-			tl(stack)
-		end
-
-		data = put_in(data.stacks[pid], stack) |> dbg()
-
-		IO.puts("---------------------------------------")
-
-		data
-	end
-
-
-	defp process_trace(event, data) do
-		dbg({event, data})
-
-		data
-	end
-
-
-	def trace_ecto do
-		:dbg.p(:all, [:c])
-		# :dbg.tpl(Ecto, []) |> dbg()
-		:dbg.tpl(Ecto.Repo.Assoc, [{:_, [], [{:return_trace}]}]) |> dbg()
-		:dbg.tpl(Ecto.Repo.Queryable, [{:_, [], [{:return_trace}]}]) |> dbg()
-		# :dbg.tpl(Kernel, []) |> dbg()
-		# :dbg.tpl(Test.Repo, []) |> dbg()
-		# :dbg.tpl(:_, []) |> dbg()
-		:dbg.ltp() |> dbg()
-	end
-end
-
-TraceHelpers.configure_tracer()
 
 # Define Tests
 defmodule Tests do
@@ -221,8 +112,6 @@ defmodule Tests do
 	setup tags do
 		pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Test.Repo, shared: not tags[:async])
 		on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
-		on_exit(fn ->
-		end)
 		:ok
 	end
 
@@ -248,8 +137,6 @@ defmodule Tests do
 			one_assoc: %{id: single_association_id, x: generated_x}
 		} = test_fixture()
 
-		TraceHelpers.trace_ecto()
-
 		%SingleAssociation{
 			id: nil,
 			x: ^generated_x,
@@ -265,13 +152,9 @@ defmodule Tests do
 				preload: [my_schema: ms],
 				select: [:x, my_schema: [:property]]
 			)
-			|> dbg()
 			|> Repo.one!()
-
-			:dbg.stop_clear() |> dbg()
 		end
 
-	@tag :only
 	test "bug: cannot partial select structs without id: list" do
 		%MySchema{
 			property: generated_property_1,
@@ -282,8 +165,6 @@ defmodule Tests do
 			property: generated_property_2,
 			one_assoc: %{x: generated_x_2}
 		} = test_fixture()
-
-		TraceHelpers.trace_ecto()
 
 		assert [
 			%SingleAssociation{
@@ -312,8 +193,6 @@ defmodule Tests do
 				select: [:x, my_schema: [:property]]
 			)
 			|> Repo.all()
-
-		:dbg.stop_clear() |> dbg()
 	end
 
 	test "bug counterexample: can partial select, if id's are included for all structs and preloads: single element" do
