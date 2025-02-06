@@ -97,6 +97,39 @@ ExUnit.start(
 # Configure Ecto
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 
+defmodule TraceEventFormat do
+	defmodule Event do
+		@derive JSON.Encoder
+		defstruct [
+			# name: The name of the event, as displayed in Trace Viewer
+			:name,
+
+			# ph: The event type. This is a single character which changes depending on the type of event being output. The valid values are listed in the table below. We will discuss each phase type below.
+			:ph,
+
+			# ts: The tracing clock timestamp of the event. The timestamps are provided at microsecond granularity.
+			:ts,
+
+			# tts: Optional. The thread clock timestamp of the event. The timestamps are provided at microsecond granularity.
+			# :tts,
+
+			# pid: The process ID for the process that output this event.
+			:pid,
+
+			# tid: The thread ID for the thread that output this event.
+			:tid,
+
+			# args: Any arguments provided for the event. Some of the event types have required argument fields, otherwise, you can put any information you wish in here. The arguments are displayed in Trace Viewer when you view an event in the analysis section.
+			:args,
+
+			# ---------------------------------------------------------------------
+
+			# cat: The event categories. This is a comma separated list of categories for the event. The categories can be used to hide events in the Trace Viewer UI.
+			cat: ""
+		]
+	end
+end
+
 defmodule TraceHelpers do
 	defmodule TraceData do
 		defstruct [
@@ -138,6 +171,18 @@ defmodule TraceHelpers do
 			|> dbg()
 
 		IO.puts("---------------------------------------")
+
+		dbg(
+			%TraceEventFormat.Event{
+				name: inspect(function),
+				ph: "B",
+				ts: 0,
+				pid: inspect(pid),
+				tid: 0,
+				args: [],
+			}
+			|> JSON.encode!()
+		)
 
 		data
 	end
