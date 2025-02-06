@@ -1,5 +1,7 @@
 # Reproduction of Elixir Partial Select Bug
 
+[Selection bug](./test.exs#L153)
+
 ## Run Reproduction
 ```sh
 elixir test.exs
