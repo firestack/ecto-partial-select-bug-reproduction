@@ -10,6 +10,21 @@ elixir test.exs
 Note: Uses Postgrex Ecto Adapter
 
 ### Bug: Partial Select with single element (Repo.one!)
+When using `join` with `preload` on an association, using `select` with a list
+of keys fails if the primary keys of the queried schema's
+(Main Schema + Preload & Join'ed Schemas) are not present in the query, and 
+throws a `Ecto.NoPrimaryKeyValueError` when merging the _already created_
+structs.
+
+```elixir
+from(
+	sa in SingleAssociation,
+	join: ms in assoc(sa, :my_schema),
+	preload: [my_schema: ms],
+	select: [:x, my_schema: [:property]]
+)
+```
+
 ```elixir
   * test bug: cannot partial select structs without id: single element [L#137]
 
