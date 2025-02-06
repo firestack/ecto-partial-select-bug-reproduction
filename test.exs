@@ -132,9 +132,9 @@ defmodule Tests do
 
 	test "bug: cannot partial select structs without id: single element" do
 		%MySchema{
-			id: my_schema_id,
+			id: _my_schema_id,
 			property: generated_property,
-			one_assoc: %{id: single_association_id, x: generated_x}
+			one_assoc: %{id: _single_association_id, x: generated_x}
 		} = test_fixture()
 
 		%SingleAssociation{
