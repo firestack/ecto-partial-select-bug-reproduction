@@ -97,6 +97,92 @@ ExUnit.start(
 # Configure Ecto
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 
+defmodule TraceHelpers do
+	defmodule TraceData do
+		defstruct [
+			stacks: %{}
+		]
+	end
+
+	def configure_tracer do
+		{:ok, _} = :dbg.tracer(
+			:process,
+			{
+				&process_trace/2,
+				%TraceData{}
+			}
+		)
+	end
+
+	def stop do
+		:dbg.stop_clear()
+	end
+
+	defp process_trace({:trace, pid, :call, {module, function, args}}, data) do
+		function = Function.capture(module, function, length(args))
+
+		IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
+		for {arg, index} <- Enum.with_index(args) do
+			IO.puts("arg[#{index+1}]: #{inspect(arg, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
+		end
+
+		IO.puts("=======================================")
+		# dbg(%{thing: :call, function: function, args: args})
+
+		data =
+			%{data
+				| stacks: %{
+					pid => [function] ++ (data.stacks[pid] || [])
+				}
+			}
+			|> dbg()
+
+		IO.puts("---------------------------------------")
+
+		data
+	end
+
+	defp process_trace({:trace, pid, :return_from, {module, function, arity}, ret_val}, data) do
+		function = Function.capture(module, function, arity)
+
+		IO.puts("ret_: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
+		IO.puts("#{inspect(ret_val, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
+		IO.puts("=======================================")
+
+		%TraceData{stacks: %{^pid => stack}} = data
+		stack = if function == (hd(stack)) do
+			tl(stack)
+		end
+
+		data = put_in(data.stacks[pid], stack) |> dbg()
+
+		IO.puts("---------------------------------------")
+
+		data
+	end
+
+
+	defp process_trace(event, data) do
+		dbg({event, data})
+
+		data
+	end
+
+
+	def trace_ecto do
+		:dbg.p(:all, [:c])
+		# :dbg.tpl(Ecto, []) |> dbg()
+		:dbg.tpl(Ecto.Repo.Assoc, [{:_, [], [{:return_trace}]}]) |> dbg()
+		:dbg.tpl(Ecto.Repo.Queryable, [{:_, [], [{:return_trace}]}]) |> dbg()
+		# :dbg.tpl(Kernel, []) |> dbg()
+		# :dbg.tpl(Test.Repo, []) |> dbg()
+		# :dbg.tpl(:_, []) |> dbg()
+		:dbg.ltp() |> dbg()
+	end
+end
+
+TraceHelpers.configure_tracer()
+
 # Define Tests
 defmodule Tests do
 	use ExUnit.Case
@@ -137,6 +223,9 @@ defmodule Tests do
 			one_assoc: %{id: _single_association_id, x: generated_x}
 		} = test_fixture()
 
+
+		TraceHelpers.trace_ecto()
+
 		%SingleAssociation{
 			id: nil,
 			x: ^generated_x,
@@ -153,7 +242,9 @@ defmodule Tests do
 				select: [:x, my_schema: [:property]]
 			)
 			|> Repo.one!()
-		end
+
+		TraceHelpers.stop()
+	end
 
 	test "bug: cannot partial select structs without id: list" do
 		%MySchema{
