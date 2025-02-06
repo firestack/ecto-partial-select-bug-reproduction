@@ -5,41 +5,28 @@
 elixir test.exs
 ```
 
-```
-: mix test test/repro_select_test.exs:12
-The database for ReproSelect.Repo has been dropped
-
-[info] == Running 20250131040705 :"Elixir.ReproSelect.Repo.Migrations.Create tables".change/0 forward
-
-[info] create table parent
-
-[info] create table child
-
-[info] == Migrated 20250131040705 in 0.0s
-Running ExUnit with seed: 508772, max_cases: 16
-Excluding tags: [:test]
-Including tags: [location: {"test/repro_select_test.exs", 12}]
-
-
-[debug] QUERY OK db=0.5ms
+### Bug: Partial Select with Limit 1
+```elixir
+  * test bug: cannot partial select structs without id: single element [L#137]
+16:34:44.895 [debug] QUERY OK db=0.7ms
 begin []
 
-[debug] QUERY OK source="parent" db=0.4ms
-INSERT INTO "parent" ("x") VALUES ($1) RETURNING "id" [1]
+16:34:44.899 [debug] QUERY OK source="my_schema" db=0.3ms
+INSERT INTO "my_schema" ("property") VALUES ($1) RETURNING "id" [58]
 
-[debug] QUERY OK source="child" db=0.4ms
-INSERT INTO "child" ("parent_id","x") VALUES ($1,$2) RETURNING "id" [1, 2]
+16:34:44.900 [debug] QUERY OK source="single_association" db=0.4ms
+INSERT INTO "single_association" ("my_schema_id","x") VALUES ($1,$2) RETURNING "id" [464, 17]
 
-[debug] QUERY OK db=0.1ms
+16:34:44.900 [debug] QUERY OK db=0.1ms
 commit []
 
-[debug] QUERY OK source="child" db=0.3ms queue=0.1ms
-SELECT c0."x", p1."x" FROM "child" AS c0 INNER JOIN "parent" AS p1 ON p1."id" = c0."parent_id" []
+16:34:44.901 [debug] QUERY OK source="single_association" db=0.2ms queue=0.1ms
+SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_schema" AS m1 ON m1."id" = s0."my_schema_id" []
+  * test bug: cannot partial select structs without id: single element (13.4ms) [L#137]
 
-
-  1) test bug: cannot partial select structs without id (ReproSelectTest)
-     test/repro_select_test.exs:12
-     ** (Ecto.NoPrimaryKeyValueError) struct `%ReproSelect.Schema.Child{__meta__: #Ecto.Schema.Metadata<:loaded, "child">, id: nil, x: 2, parent_id: nil, parent: #Ecto.Association.NotLoaded<association :parent is not loaded>}` is missing primary key value
+  1) test bug: cannot partial select structs without id: single element (Tests)
+     test.exs:137
+     ** (Ecto.NoPrimaryKeyValueError) struct `%Test.Schemas.SingleAssociation{__meta__: #Ecto.Schema.Metadata<:loaded, "single_association">, id: nil, x: 17, my_schema_id: nil, my_schema: #Ecto.Association.NotLoaded<association :my_schema is not loaded>}` is missing primary key value
      code: |> Repo.one!()
      stacktrace:
        (ecto 3.12.5) lib/ecto/repo/assoc.ex:40: anonymous fn/2 in Ecto.Repo.Assoc.merge/3
@@ -51,9 +38,5 @@ SELECT c0."x", p1."x" FROM "child" AS c0 INNER JOIN "parent" AS p1 ON p1."id" = 
        (ecto 3.12.5) lib/ecto/repo/queryable.ex:237: Ecto.Repo.Queryable.execute/4
        (ecto 3.12.5) lib/ecto/repo/queryable.ex:19: Ecto.Repo.Queryable.all/3
        (ecto 3.12.5) lib/ecto/repo/queryable.ex:162: Ecto.Repo.Queryable.one!/3
-       test/repro_select_test.exs:27: (test)
-
-
-Finished in 0.03 seconds (0.00s async, 0.03s sync)
-3 tests, 1 failure, 2 excluded
+       test.exs:159: (test)
 ```
