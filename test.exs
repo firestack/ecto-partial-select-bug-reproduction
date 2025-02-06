@@ -200,6 +200,7 @@ defmodule TraceHelpers do
 		# :dbg.tpl(Kernel, []) |> dbg()
 		# :dbg.tpl(Test.Repo, []) |> dbg()
 		# :dbg.tpl(:_, []) |> dbg()
+		:dbg.ltp() |> dbg()
 	end
 end
 
