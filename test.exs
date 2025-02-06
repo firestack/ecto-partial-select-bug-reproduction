@@ -125,18 +125,23 @@ ExUnit.start(
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 
 defmodule TraceHelpers do
+	defmodule TraceData do
+		defstruct [
+			stacks: %{}
+		]
+	end
 	def configure_tracer do
 
 		{:ok, _} = :dbg.tracer(
 			:process,
 			{
 				&process_trace/2,
-				nil
+				%TraceData{}
 			}
 		)
 	end
 
-	defp process_trace({:trace, _pid, :call, {module, function, args}}, _data) do
+	defp process_trace({:trace, pid, :call, {module, function, args}}, data) do
 		function = Function.capture(module, function, length(args))
 
 		IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
@@ -147,24 +152,43 @@ defmodule TraceHelpers do
 		IO.puts("=======================================")
 		# dbg(%{thing: :call, function: function, args: args})
 
-		nil
+		data =
+			%{data
+				| stacks: %{
+					pid => [function] ++ (data.stacks[pid] || [])
+				}
+			}
+			|> dbg()
+
+		IO.puts("---------------------------------------")
+
+		data
 	end
 
-	defp process_trace({:trace, _pid, :return_from, {module, function, arity}, ret_val}, _data) do
+	defp process_trace({:trace, pid, :return_from, {module, function, arity}, ret_val}, data) do
 		function = Function.capture(module, function, arity)
 
 		IO.puts("ret_: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
 		IO.puts("#{inspect(ret_val, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
 		IO.puts("=======================================")
 
-		nil
+		%TraceData{stacks: %{^pid => stack}} = data
+		stack = if function == (hd(stack)) do
+			tl(stack)
+		end
+
+		data = put_in(data.stacks[pid], stack) |> dbg()
+
+		IO.puts("---------------------------------------")
+
+		data
 	end
 
 
 	defp process_trace(event, data) do
 		dbg({event, data})
 
-		nil
+		data
 	end
 
 
