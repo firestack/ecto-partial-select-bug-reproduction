@@ -1,7 +1,7 @@
 # Reproduction of Elixir Partial Select Bug
 
 ## Run Reproduction
-```shell
+```sh
 elixir test.exs
 ```
 
