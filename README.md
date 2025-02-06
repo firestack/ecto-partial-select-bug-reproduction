@@ -24,7 +24,7 @@ commit []
 SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_schema" AS m1 ON m1."id" = s0."my_schema_id" []
   * test bug: cannot partial select structs without id: single element (13.4ms) [L#137]
 
-  1) test bug: cannot partial select structs without id: single element (Tests)
+  test bug: cannot partial select structs without id: single element (Tests)
      test.exs:137
      ** (Ecto.NoPrimaryKeyValueError) struct
      `%Test.Schemas.SingleAssociation{
@@ -80,7 +80,7 @@ commit []
 SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_schema" AS m1 ON m1."id" = s0."my_schema_id" []
   * test bug: cannot partial select structs without id: list (15.0ms) [L#162]
 
-  1) test bug: cannot partial select structs without id: list (Tests)
+  test bug: cannot partial select structs without id: list (Tests)
      test.exs:162
      ** (Ecto.NoPrimaryKeyValueError) struct
      `%Test.Schemas.SingleAssociation{
