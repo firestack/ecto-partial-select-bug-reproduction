@@ -131,26 +131,6 @@ defmodule TraceHelpers do
 			:process,
 			{
 				&process_trace/2,
-				# fn
-				# 	{:trace, _pid, :call, {module, function, args}}, _data ->
-				# 		function = Function.capture(module, function, length(args))
-
-				# 		IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
-				# 		for {arg, index} <- Enum.with_index(args) do
-				# 			IO.puts("arg[#{index+1}]: #{inspect(arg, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
-				# 		end
-
-				# 		IO.puts("")
-				# 		# dbg(%{thing: :call, function: function, args: args})
-				# 		nil
-
-				# 	{:trace, _pid, :return_from, {module, function, arity}, ret_val}, _data ->
-				# 		function = Function.capture(module, function, arity)
-
-				# 		dbg({:returned, function, ret_val})
-				# 		nil
-				# 	event, data -> dbg({event, data})
-				# end,
 				nil
 			}
 		)
