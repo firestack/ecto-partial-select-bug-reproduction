@@ -265,4 +265,6 @@ defmodule Tests do
 end
 
 # Run Tests
-ExUnit.run()
+_pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Test.Repo, shared: false)
+
+Tests."test bug: cannot partial select structs without id: single element"(nil)
