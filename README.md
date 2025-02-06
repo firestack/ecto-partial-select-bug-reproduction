@@ -7,6 +7,8 @@
 elixir test.exs
 ```
 
+Note: Uses Postgrex Ecto Adapter
+
 ### Bug: Partial Select with single element (Repo.one!)
 ```elixir
   * test bug: cannot partial select structs without id: single element [L#137]
