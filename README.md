@@ -22,6 +22,7 @@ commit []
 
 16:34:44.901 [debug] QUERY OK source="single_association" db=0.2ms queue=0.1ms
 SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_schema" AS m1 ON m1."id" = s0."my_schema_id" []
+
   * test bug: cannot partial select structs without id: single element (13.4ms) [L#137]
 
   test bug: cannot partial select structs without id: single element (Tests)
@@ -78,6 +79,7 @@ commit []
 
 16:33:54.910 [debug] QUERY OK source="single_association" db=0.3ms queue=0.1ms
 SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_schema" AS m1 ON m1."id" = s0."my_schema_id" []
+
   * test bug: cannot partial select structs without id: list (15.0ms) [L#162]
 
   test bug: cannot partial select structs without id: list (Tests)
