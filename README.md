@@ -26,7 +26,15 @@ SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_sche
 
   1) test bug: cannot partial select structs without id: single element (Tests)
      test.exs:137
-     ** (Ecto.NoPrimaryKeyValueError) struct `%Test.Schemas.SingleAssociation{__meta__: #Ecto.Schema.Metadata<:loaded, "single_association">, id: nil, x: 17, my_schema_id: nil, my_schema: #Ecto.Association.NotLoaded<association :my_schema is not loaded>}` is missing primary key value
+     ** (Ecto.NoPrimaryKeyValueError) struct
+     `%Test.Schemas.SingleAssociation{
+         __meta__: #Ecto.Schema.Metadata<:loaded, "single_association">,
+         id: nil,
+         x: 17,
+         my_schema_id: nil,
+         my_schema: #Ecto.Association.NotLoaded<association :my_schema is not loaded>
+     }`
+     is missing primary key value
      code: |> Repo.one!()
      stacktrace:
        (ecto 3.12.5) lib/ecto/repo/assoc.ex:40: anonymous fn/2 in Ecto.Repo.Assoc.merge/3
@@ -74,7 +82,15 @@ SELECT s0."x", m1."property" FROM "single_association" AS s0 INNER JOIN "my_sche
 
   1) test bug: cannot partial select structs without id: list (Tests)
      test.exs:162
-     ** (Ecto.NoPrimaryKeyValueError) struct `%Test.Schemas.SingleAssociation{__meta__: #Ecto.Schema.Metadata<:loaded, "single_association">, id: nil, x: 85, my_schema_id: nil, my_schema: #Ecto.Association.NotLoaded<association :my_schema is not loaded>}` is missing primary key value
+     ** (Ecto.NoPrimaryKeyValueError) struct
+     `%Test.Schemas.SingleAssociation{
+         __meta__: #Ecto.Schema.Metadata<:loaded, "single_association">,
+         id: nil,
+         x: 85,
+         my_schema_id: nil,
+         my_schema: #Ecto.Association.NotLoaded<association :my_schema is not loaded>
+     }`
+     is missing primary key value
      code: |> Repo.all()
      stacktrace:
        (ecto 3.12.5) lib/ecto/repo/assoc.ex:40: anonymous fn/2 in Ecto.Repo.Assoc.merge/3
