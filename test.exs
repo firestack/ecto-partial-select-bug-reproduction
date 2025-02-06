@@ -124,27 +124,70 @@ ExUnit.start(
 # Configure Ecto
 Ecto.Adapters.SQL.Sandbox.mode(Test.Repo, :manual)
 
-{:ok, _} = :dbg.tracer(
-	:process,
-	{
-		fn
-			{:trace, _pid, :call, {module, function, args}}, _data ->
-				function = Function.capture(module, function, length(args))
-				dbg(%{thing: :call, function: function, args: args})
-				nil
-
-			{:trace, _pid, :return_from, {module, function, arity}, ret_val}, _data ->
-				function = Function.capture(module, function, arity)
-
-				dbg({:returned, function, ret_val})
-				nil
-			event, data -> dbg({event, data})
-		end,
-		nil
-	}
-)
-
 defmodule TraceHelpers do
+	def configure_tracer do
+
+		{:ok, _} = :dbg.tracer(
+			:process,
+			{
+				&process_trace/2,
+				# fn
+				# 	{:trace, _pid, :call, {module, function, args}}, _data ->
+				# 		function = Function.capture(module, function, length(args))
+
+				# 		IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
+				# 		for {arg, index} <- Enum.with_index(args) do
+				# 			IO.puts("arg[#{index+1}]: #{inspect(arg, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
+				# 		end
+
+				# 		IO.puts("")
+				# 		# dbg(%{thing: :call, function: function, args: args})
+				# 		nil
+
+				# 	{:trace, _pid, :return_from, {module, function, arity}, ret_val}, _data ->
+				# 		function = Function.capture(module, function, arity)
+
+				# 		dbg({:returned, function, ret_val})
+				# 		nil
+				# 	event, data -> dbg({event, data})
+				# end,
+				nil
+			}
+		)
+	end
+
+	defp process_trace({:trace, _pid, :call, {module, function, args}}, _data) do
+		function = Function.capture(module, function, length(args))
+
+		IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
+		for {arg, index} <- Enum.with_index(args) do
+			IO.puts("arg[#{index+1}]: #{inspect(arg, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
+		end
+
+		IO.puts("=======================================")
+		# dbg(%{thing: :call, function: function, args: args})
+
+		nil
+	end
+
+	defp process_trace({:trace, _pid, :return_from, {module, function, arity}, ret_val}, _data) do
+		function = Function.capture(module, function, arity)
+
+		IO.puts("ret_: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
+		IO.puts("#{inspect(ret_val, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
+		IO.puts("=======================================")
+
+		nil
+	end
+
+
+	defp process_trace(event, data) do
+		dbg({event, data})
+
+		nil
+	end
+
+
 	def trace_ecto do
 		:dbg.p(:all, [:c])
 		# :dbg.tpl(Ecto, []) |> dbg()
@@ -155,6 +198,8 @@ defmodule TraceHelpers do
 		# :dbg.tpl(:_, []) |> dbg()
 	end
 end
+
+TraceHelpers.configure_tracer()
 
 # Define Tests
 defmodule Tests do
