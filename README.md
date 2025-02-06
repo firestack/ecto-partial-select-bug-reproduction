@@ -1,4 +1,4 @@
-# ReproSelect
+# Reproduction of Elixir Partial Select Bug
 ```
 : mix test test/repro_select_test.exs:12
 The database for ReproSelect.Repo has been dropped
