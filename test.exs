@@ -110,7 +110,7 @@ defmodule TraceEventFormat do
 			# ts: The tracing clock timestamp of the event. The timestamps are provided at microsecond granularity.
 			:ts,
 
-			# tts: Optional. The thread clock timestamp of the event. The timestamps are provided at microsecond granularity.
+			# # tts: Optional. The thread clock timestamp of the event. The timestamps are provided at microsecond granularity.
 			# :tts,
 
 			# pid: The process ID for the process that output this event.
@@ -133,33 +133,45 @@ end
 defmodule TraceHelpers do
 	defmodule TraceData do
 		defstruct [
-			stacks: %{}
+			stacks: %{},
+			out_file: nil
 		]
 	end
 
 	def configure_tracer do
+		# {:ok, _} = :dbg.tracer(
+		# 	:file,
+		# 	"./output.trace"
+		# )
 		{:ok, _} = :dbg.tracer(
 			:process,
 			{
 				&process_trace/2,
-				%TraceData{}
+				%TraceData{
+					out_file: (
+						file =File.open!("./output.json", [:write])
+						IO.puts(file, "[")
+						file
+					)
+				}
 			}
 		)
 	end
 
 	def stop do
-		:dbg.stop_clear()
+		:dbg.stop()
 	end
 
-	defp process_trace({:trace, pid, :call, {module, function, args}}, data) do
+	defp process_trace({:trace_ts, pid, :call, {module, function, args} = a, ts}, %TraceData{out_file: file} = data) do
+		dbg(a)
 		function = Function.capture(module, function, length(args))
 
-		IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
+		# IO.puts("call: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
 		for {arg, index} <- Enum.with_index(args) do
-			IO.puts("arg[#{index+1}]: #{inspect(arg, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
+			# IO.puts("arg[#{index+1}]: #{inspect(arg, syntax_colors: IO.ANSI.syntax_colors, pretty: true)}")
 		end
 
-		IO.puts("=======================================")
+		# IO.puts("=======================================")
 		# dbg(%{thing: :call, function: function, args: args})
 
 		data =
@@ -168,26 +180,31 @@ defmodule TraceHelpers do
 					pid => [function] ++ (data.stacks[pid] || [])
 				}
 			}
-			|> dbg()
+			# |> dbg()
 
-		IO.puts("---------------------------------------")
+		# IO.puts("---------------------------------------")
 
-		dbg(
-			%TraceEventFormat.Event{
-				name: inspect(function),
-				ph: "B",
-				ts: 0,
-				pid: inspect(pid),
-				tid: 0,
-				args: [],
-			}
-			|> JSON.encode!()
-		)
+		json = %TraceEventFormat.Event{
+			name: inspect(function),
+			ph: "B",
+			ts: ts / 1000000,
+			pid: inspect(pid),
+			tid: 0,
+			args: %{fn_args: Enum.map(args, &inspect/1)},
+		}
+		|> Map.from_struct()
+		|> JSON.encode!()
+
+		IO.puts(file, json <> ",")
+
+		json
+		|> (& (IO.ANSI.blue() <> &1 <> IO.ANSI.reset())).()
+		|> IO.puts()
 
 		data
 	end
 
-	defp process_trace({:trace, pid, :return_from, {module, function, arity}, ret_val}, data) do
+	defp process_trace({:trace_ts, pid, :return_from, {module, function, arity}, ret_val, ts}, %TraceData{out_file: file} = data) do
 		function = Function.capture(module, function, arity)
 
 		IO.puts("ret_: #{inspect(function, syntax_colors: IO.ANSI.syntax_colors)}")
@@ -203,30 +220,52 @@ defmodule TraceHelpers do
 
 		IO.puts("---------------------------------------")
 
+		json = %TraceEventFormat.Event{
+			name: inspect(function),
+			ph: "E",
+			ts: ts / 1000000,
+			pid: 0,
+			tid: pid,
+			args: %{ret: inspect(ret_val)},
+		}
+		|> Map.from_struct()
+		|> JSON.encode!()
+
+		IO.puts(file, json <> ",")
+
+		json
+		|> (& (IO.ANSI.blue() <> &1 <> IO.ANSI.reset())).()
+		|> IO.puts()
+
 		data
 	end
 
 
 	defp process_trace(event, data) do
-		dbg({event, data})
+		dbg(event)
+		dbg(data)
 
+		raise "wtf"
 		data
 	end
 
 
 	def trace_ecto do
-		:dbg.p(:all, [:c])
+		TraceHelpers.configure_tracer()
+
+		# :dbg.p(:all, [:c]) |> dbg()
 		# :dbg.tpl(Ecto, []) |> dbg()
-		:dbg.tpl(Ecto.Repo.Assoc, [{:_, [], [{:return_trace}]}]) |> dbg()
 		:dbg.tpl(Ecto.Repo.Queryable, [{:_, [], [{:return_trace}]}]) |> dbg()
+		:dbg.tpl(Ecto.Repo.Assoc, [{:_, [], [{:return_trace}]}]) |> dbg()
 		# :dbg.tpl(Kernel, []) |> dbg()
 		# :dbg.tpl(Test.Repo, []) |> dbg()
 		# :dbg.tpl(:_, []) |> dbg()
-		:dbg.ltp() |> dbg()
+		# :dbg.ltp() |> dbg()
+
+		:dbg.p(:all, [:c, :monotonic_timestamp]) |> dbg()
 	end
 end
 
-TraceHelpers.configure_tracer()
 
 # Define Tests
 defmodule Tests do
@@ -288,7 +327,6 @@ defmodule Tests do
 			)
 			|> Repo.one!()
 
-		TraceHelpers.stop()
 	end
 
 	test "bug: cannot partial select structs without id: list" do
@@ -403,4 +441,10 @@ end
 # Run Tests
 _pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Test.Repo, shared: false)
 
-Tests."test bug: cannot partial select structs without id: single element"(nil)
+try do
+	Tests."test bug: cannot partial select structs without id: single element"(nil)
+rescue
+  _ -> nil
+end
+
+TraceHelpers.stop() |> dbg()
